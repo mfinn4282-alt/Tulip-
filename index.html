@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Date Planner ✨</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ffe6e6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .container {
+            background: white;
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 450px;
+            width: 100%;
+        }
+        h1, h2 {
+            color: #ff4d6d;
+            margin-bottom: 20px;
+        }
+        p {
+            color: #666;
+            line-height: 1.5;
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+            height: 60px;
+            margin-top: 20px;
+        }
+        button {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.2s ease;
+            font-weight: bold;
+        }
+        #yesBtn, .next-btn {
+            background-color: #ff4d6d;
+            color: white;
+        }
+        #yesBtn:hover, .next-btn:hover {
+            transform: scale(1.05);
+            background-color: #ff758f;
+        }
+        #noBtn {
+            background-color: #cccccc;
+            color: #333333;
+            position: absolute; /* Changed to absolute to prevent structural layout jumping */
+            touch-action: none;
+            z-index: 10;
+        }
+        .tab-content {
+            display: none;
+            text-align: left;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        .active-tab {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 8px;
+        }
+        input[type="date"], input[type="time"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ffccd5;
+            border-radius: 10px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+        }
+        input:focus, select:focus {
+            border-color: #ff4d6d;
+        }
+        .next-btn {
+            width: 100%;
+            margin-top: 10px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="askTab" class="tab-content active-tab">
+            <h1 id="question">Will you go on a date with me sudu? 🌷✨</h1>
+            <div class="buttons">
+                <button id="yesBtn" onclick="goToTab('dateTimeTab')">Yes!</button>
+                <span style="width: 80px; display: inline-block;" id="btnSpacer"></span>
+                <button id="noBtn" onmouseover="moveButton()" onclick="moveButton()" ontouchstart="moveButton()">No</button>
+            </div>
+        </div>
+
+        <div id="dateTimeTab" class="tab-content">
+            <h2>Pick a Date & Time 🗓️</h2>
+            <div class="form-group">
+                <label for="dateSelect">Which day works best?</label>
+                <input type="date" id="dateSelect">
+            </div>
+            <div class="form-group">
+                <label for="timeSelect">What time?</label>
+                <input type="time" id="timeSelect">
+            </div>
+            <button class="next-btn" onclick="validateDateTime()">Next: Plan Activities ✨</button>
+        </div>
+
+        <div id="activitiesTab" class="tab-content">
+            <h2>What are we doing? 🥂</h2>
+            <p style="text-align: center; font-size: 0.9rem; margin-bottom: 20px;">Choose the vibe for our date:</p>
+            
+            <div class="form-group">
+                <label for="activitySelect">Our main plan:</label>
+                <select id="activitySelect">
+                    <option value="" disabled selected>Select an activity...</option>
+                    <option value="Grabbing cozy coffee & talking for hours ☕">Cozy Coffee & Talking ☕</option>
+                    <option value="Going on a romantic lunch date 🍝">Romantic Lunch Date 🍝</option>
+                    <option value="Watching a movie together with snacks 🍿">Movie 🍿</option>
+                    <option value="Going on a scenic walk & eating ice cream 🍦">Scenic Walk & Ice Cream 🍦</option>
+                    <option value="Going on a bike ride with beautiful scenery 🏍️">Bike ride with beautiful scenery 🏍️</option>
+                </select>
+            </div>
+            <button class="next-btn" onclick="finishPlanning()">Lock it in! ❤️</button>
+        </div>
+
+        <div id="finalTab" class="tab-content" style="text-align: center;">
+            <h2>It's officially a date! 🥰💘</h2>
+            <p>Your plan is ready! Click below to copy the details, then paste it into our chat to text it to me!</p>
+            <button class="next-btn" id="copyBtn">📋 Copy Details to Text Me</button>
+        </div>
+    </div>
+
+    <script>
+        let formattedMessage = "";
+
+        // Align the button dynamically right when the page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            positionNoButtonInitially();
+        });
+        window.addEventListener('resize', () => {
+            // Recalculate if they rotate their mobile phone screen
+            if(document.getElementById('noBtn').style.position !== 'fixed') {
+                positionNoButtonInitially();
+            }
+        });
+
+        function positionNoButtonInitially() {
+            const noBtn = document.getElementById('noBtn');
+            const spacer = document.getElementById('btnSpacer');
+            if(!spacer || !noBtn) return;
+            const rect = spacer.getBoundingClientRect();
+            
+            // Lock the No button perfectly over our layout spacer element
+            noBtn.style.left = (rect.left + window.scrollX) + 'px';
+            noBtn.style.top = (rect.top + window.scrollY) + 'px';
+        }
+
+        function moveButton() {
+            const noBtn = document.getElementById('noBtn');
+            const yesBtn = document.getElementById('yesBtn');
+            
+            const padding = 60;
+            let randomX, randomY;
+            let overlapping = true;
+
+            const yesRect = yesBtn.getBoundingClientRect();
+
+            while (overlapping) {
+                const maxX = window.innerWidth - noBtn.offsetWidth - padding;
+                const maxY = window.innerHeight - noBtn.offsetHeight - padding;
+                
+                randomX = Math.max(padding, Math.floor(Math.random() * maxX));
+                randomY = Math.max(padding, Math.floor(Math.random() * maxY));
+
+                const buffer = 60; 
+                const noRectFuture = {
+                    left: randomX,
+                    right: randomX + noBtn.offsetWidth,
+                    top: randomY,
+                    bottom: randomY + noBtn.offsetHeight
+                };
+
+                const isOverlappingX = noRectFuture.right >= (yesRect.left - buffer) && noRectFuture.left <= (yesRect.right + buffer);
+                const isOverlappingY = noRectFuture.bottom >= (yesRect.top - buffer) && noRectFuture.top <= (yesRect.bottom + buffer);
+
+                if (!(isOverlappingX && isOverlappingY)) {
+                    overlapping = false; 
+                }
+            }
+            
+            noBtn.style.position = 'fixed';
+            noBtn.style.left = randomX + 'px';
+            noBtn.style.top = randomY + 'px';
+        }
+
+        function goToTab(tabId) {
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active-tab'));
+            document.getElementById(tabId).classList.add('active-tab');
+            
+            if (tabId !== 'askTab') {
+                document.body.style.backgroundColor = '#ffccd5';
+                // Clean up fixed button elements out of view
+                document.getElementById('noBtn').style.display = 'none';
+            }
+        }
+
+        function validateDateTime() {
+            const date = document.getElementById('dateSelect').value;
+            const time = document.getElementById('timeSelect').value;
+            
+            if (!date || !time) {
+                alert("Please select both a date and a time! 😊");
+                return;
+            }
+            goToTab('activitiesTab');
+        }
+
+        function finishPlanning() {
+            const date = document.getElementById('dateSelect').value;
+            const time = document.getElementById('timeSelect').value;
+            const activity = document.getElementById('activitySelect').value;
+
+            if (!activity) {
+                alert("Please select an activity vibe! 🗓️");
+                return;
+            }
+
+            formattedMessage = `Hey! I filled out the planner. Here is our date layout:\n\n📅 Date: ${date}\n⏰ Time: ${time}\n✨ Activity: ${activity}\n\nSee you then! 😉❤️`;
+            
+            document.getElementById('copyBtn').onclick = copyToClipboard;
+            goToTab('finalTab');
+        }
+
+        function copyToClipboard() {
+            navigator.clipboard.writeText(formattedMessage).then(() => {
+                const copyBtn = document.getElementById('copyBtn');
+                copyBtn.innerText = "✅ Copied! Go paste it in our chat!";
+                copyBtn.style.backgroundColor = "#4caf50";
+                alert("Copied to clipboard! 📋 Go ahead and paste it into our chat to send it to me! 🥰");
+            }).catch(err => {
+                alert("Oops, something went wrong copying the text. Try manually selecting it!");
+            });
+        }
+    </script>
+</body>
+</html>
